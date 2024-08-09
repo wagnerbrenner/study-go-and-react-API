@@ -128,8 +128,10 @@ func (h apiHandler) notifyClients(msg Message) {
 }
 
 func (h apiHandler) handleSubscribe(w http.ResponseWriter, r *http.Request) {
-	_, rawRoomID, _, ok := h.readRoom(w, r)
-	if !ok {
+	rawRoomID := chi.URLParam(r, "room_id")
+	_, err := uuid.Parse(rawRoomID)
+	if err != nil {
+		http.Error(w, "invalid room id", http.StatusBadRequest)
 		return
 	}
 
@@ -199,8 +201,22 @@ func (h apiHandler) handleGetRooms(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h apiHandler) handleGetRoom(w http.ResponseWriter, r *http.Request) {
-	room, _, _, ok := h.readRoom(w, r)
-	if !ok {
+	rawRoomID := chi.URLParam(r, "room_id")
+	roomID, err := uuid.Parse(rawRoomID)
+	if err != nil {
+		http.Error(w, "invalid room id", http.StatusBadRequest)
+		return
+	}
+
+	room, err := h.q.GetRoom(r.Context(), roomID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			http.Error(w, "room not found", http.StatusBadRequest)
+			return
+		}
+
+		slog.Error("failed to get room", "error", err)
+		http.Error(w, "something went wrong", http.StatusInternalServerError)
 		return
 	}
 
@@ -208,8 +224,22 @@ func (h apiHandler) handleGetRoom(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h apiHandler) handleCreateRoomMessage(w http.ResponseWriter, r *http.Request) {
-	_, rawRoomID, roomID, ok := h.readRoom(w, r)
-	if !ok {
+	rawRoomID := chi.URLParam(r, "room_id")
+	roomID, err := uuid.Parse(rawRoomID)
+	if err != nil {
+		http.Error(w, "invalid room id", http.StatusBadRequest)
+		return
+	}
+
+	_, err = h.q.GetRoom(r.Context(), roomID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			http.Error(w, "room not found", http.StatusBadRequest)
+			return
+		}
+
+		slog.Error("failed to get room", "error", err)
+		http.Error(w, "something went wrong", http.StatusInternalServerError)
 		return
 	}
 
@@ -246,8 +276,23 @@ func (h apiHandler) handleCreateRoomMessage(w http.ResponseWriter, r *http.Reque
 }
 
 func (h apiHandler) handleGetRoomMessages(w http.ResponseWriter, r *http.Request) {
-	_, _, roomID, ok := h.readRoom(w, r)
-	if !ok {
+	rawRoomID := chi.URLParam(r, "room_id")
+	roomID, err := uuid.Parse(rawRoomID)
+	if err != nil {
+		http.Error(w, "invalid room id", http.StatusBadRequest)
+		return
+	}
+
+	_, err = h.q.GetRoom(r.Context(), roomID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			http.Error(w, "room not found", http.StatusBadRequest)
+			return
+		}
+
+		slog.Error("failed to get room", "error", err)
+
+		http.Error(w, "something went wrong", http.StatusInternalServerError)
 		return
 	}
 
@@ -266,8 +311,10 @@ func (h apiHandler) handleGetRoomMessages(w http.ResponseWriter, r *http.Request
 }
 
 func (h apiHandler) handleGetRoomMessage(w http.ResponseWriter, r *http.Request) {
-	_, _, _, ok := h.readRoom(w, r)
-	if !ok {
+	rawRoomID := chi.URLParam(r, "room_id")
+	_, err := uuid.Parse(rawRoomID)
+	if err != nil {
+		http.Error(w, "invalid room id", http.StatusBadRequest)
 		return
 	}
 
@@ -294,8 +341,10 @@ func (h apiHandler) handleGetRoomMessage(w http.ResponseWriter, r *http.Request)
 }
 
 func (h apiHandler) handleReactToMessage(w http.ResponseWriter, r *http.Request) {
-	_, rawRoomID, _, ok := h.readRoom(w, r)
-	if !ok {
+	rawRoomID := chi.URLParam(r, "room_id")
+	_, err := uuid.Parse(rawRoomID)
+	if err != nil {
+		http.Error(w, "invalid room id", http.StatusBadRequest)
 		return
 	}
 
@@ -330,8 +379,10 @@ func (h apiHandler) handleReactToMessage(w http.ResponseWriter, r *http.Request)
 }
 
 func (h apiHandler) handleRemoveReactFromMessage(w http.ResponseWriter, r *http.Request) {
-	_, rawRoomID, _, ok := h.readRoom(w, r)
-	if !ok {
+	rawRoomID := chi.URLParam(r, "room_id")
+	_, err := uuid.Parse(rawRoomID)
+	if err != nil {
+		http.Error(w, "invalid room id", http.StatusBadRequest)
 		return
 	}
 
@@ -366,8 +417,10 @@ func (h apiHandler) handleRemoveReactFromMessage(w http.ResponseWriter, r *http.
 }
 
 func (h apiHandler) handleMarkMessageAsAnswered(w http.ResponseWriter, r *http.Request) {
-	_, rawRoomID, _, ok := h.readRoom(w, r)
-	if !ok {
+	rawRoomID := chi.URLParam(r, "room_id")
+	_, err := uuid.Parse(rawRoomID)
+	if err != nil {
+		http.Error(w, "invalid room id", http.StatusBadRequest)
 		return
 	}
 
