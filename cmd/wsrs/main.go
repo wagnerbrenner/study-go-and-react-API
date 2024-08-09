@@ -16,7 +16,7 @@ import (
 
 func main() {
 	if err := godotenv.Load(); err != nil {
-		panic(fmt.Sprintf("Error loading .env file: %v", err))
+		panic(err)
 	}
 
 	ctx := context.Background()
@@ -30,13 +30,13 @@ func main() {
 		os.Getenv("WSRS_DATABASE_NAME"),
 	))
 	if err != nil {
-		panic(fmt.Sprintf("Error creating connection pool: %v", err))
+		panic(err)
 	}
 
 	defer pool.Close()
 
 	if err := pool.Ping(ctx); err != nil {
-		panic(fmt.Sprintf("Error pinging database: %v", err))
+		panic(err)
 	}
 
 	handler := api.NewHandler(pgstore.New(pool))
@@ -44,13 +44,12 @@ func main() {
 	go func() {
 		if err := http.ListenAndServe(":8080", handler); err != nil {
 			if !errors.Is(err, http.ErrServerClosed) {
-				panic(fmt.Sprintf("Error starting server: %v", err))
+				panic(err)
 			}
 		}
 	}()
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt)
-	fmt.Println("Server started. Press Ctrl+C to stop.")
 	<-quit
 }

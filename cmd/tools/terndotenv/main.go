@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"os/exec"
 
 	"github.com/joho/godotenv"
@@ -9,7 +8,7 @@ import (
 
 func main() {
 	if err := godotenv.Load(); err != nil {
-		panic(fmt.Sprintf("Error loading .env file: %v", err))
+		panic(err)
 	}
 
 	cmd := exec.Command(
@@ -20,10 +19,7 @@ func main() {
 		"--config",
 		"./internal/store/pgstore/migrations/tern.conf",
 	)
-
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		panic(fmt.Sprintf("Error running tern command: %v\nOutput: %s", err, string(output)))
+	if err := cmd.Run(); err != nil {
+		panic(err)
 	}
-	fmt.Printf("Command output: %s\n", string(output))
 }
